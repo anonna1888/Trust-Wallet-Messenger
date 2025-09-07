@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>পেমেন্ট রেকর্ড - এডমিন প্যানেল</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.admin-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.nav-menu {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+.nav-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s;
+    cursor: pointer;
+    font-size: 14px;
+}
+.nav-box:hover {
+    transform: translateY(-2px);
+    color: white;
+}
+
+.payment-container {
+    padding: 20px;
+}
+
+.payment-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid #f39c12;
+}
+
+.payment-card.approved {
+    border-left-color: #28a745;
+}
+
+.payment-card.rejected {
+    border-left-color: #dc3545;
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.payment-info {
+    flex: 1;
+}
+
+.payment-status {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.payment-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.detail-item {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.detail-label {
+    font-weight: bold;
+    color: #666;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.detail-value {
+    color: #333;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.amount-highlight {
+    color: #28a745 !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-approve {
+    background: #28a745;
+    color: white;
+}
+
+.btn-reject {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-view {
+    background: #007bff;
+    color: white;
+}
+
+.stats-container {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.stat-box {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    min-width: 150px;
+    margin: 10px;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    margin: 10px 0;
+}
+
+.filter-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 15px;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.filter-btn.active, .filter-btn:hover {
+    background: #667eea;
+    color: white;
+}
+</style>
+</head>
+<body>
+<div class="admin-header">
+    <h2>পেমেন্ট রেকর্ড ম্যানেজমেন্ট</h2>
+    <p>ইউজারদের পেমেন্ট রিকুয়েস্ট দেখুন এবং অনুমোদন/বাতিল করুন</p>
+</div>
+
+<div class="nav-menu">
+    <a href="/admin_panel" class="nav-box">🏠 মূল প্যানেল</a>
+    <a href="/admin/user_information" class="nav-box">👥 ইউজার তথ্য</a>
+    <a href="/admin/payment_records" class="nav-box" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">💰 পেমেন্ট রেকর্ড</a>
+    <a href="/admin/review_submissions" class="nav-box">⭐ রিভিউ সাবমিশন</a>
+    <a href="/admin/messaging_system" class="nav-box">💬 মেসেজিং</a>
+</div>
+
+<div class="stats-container">
+    <div class="stat-box">
+        <h4 style="color: #667eea; margin: 0;">মোট পেমেন্ট</h4>
+        <div class="stat-number"><%= payments.length %></div>
+    </div>
+    <div class="stat-box">
+        <h4 style="color: #f39c12; margin: 0;">পেন্ডিং</h4>
+        <div class="stat-number"><%= payments.filter(p => p.status === 'pending').length %></div>
+    </div>
+    <div class="stat-box">
+        <h4 style="color: #28a745; margin: 0;">অনুমোদিত</h4>
+        <div class="stat-number"><%= payments.filter(p => p.status === 'approved').length %></div>
+    </div>
+    <div class="stat-box">
+        <h4 style="color: #dc3545; margin: 0;">বাতিল</h4>
+        <div class="stat-number"><%= payments.filter(p => p.status === 'rejected').length %></div>
+    </div>
+</div>
+
+<div class="filter-section">
+    <h4 style="margin-bottom: 15px;">ফিল্টার করুন:</h4>
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterPayments('all')">সব দেখুন</button>
+        <button class="filter-btn" onclick="filterPayments('pending')">পেন্ডিং</button>
+        <button class="filter-btn" onclick="filterPayments('approved')">অনুমোদিত</button>
+        <button class="filter-btn" onclick="filterPayments('rejected')">বাতিল</button>
+    </div>
+</div>
+
+<div class="payment-container">
+    <% if (payments.length === 0) { %>
+        <div style="text-align: center; padding: 50px; color: #666;">
+            <h3>কোনো পেমেন্ট রেকর্ড পাওয়া যায়নি</h3>
+            <p>এখনো কোনো ইউজার পেমেন্ট রিকুয়েস্ট পাঠায়নি।</p>
+        </div>
+    <% } else { %>
+        <% payments.forEach(payment => { %>
+            <div class="payment-card <%= payment.status %>" data-status="<%= payment.status %>">
+                <div class="payment-header">
+                    <div class="payment-info">
+                        <h3 style="margin: 0; color: #333;"><%= payment.userName %></h3>
+                        <p style="margin: 5px 0; color: #666; font-size: 14px;">Payment ID: #<%= payment.id %></p>
+                    </div>
+                    <div class="payment-status status-<%= payment.status %>">
+                        <%= payment.status === 'pending' ? 'অপেক্ষমান' : 
+                            payment.status === 'approved' ? 'অনুমোদিত' : 'বাতিল' %>
+                    </div>
+                </div>
+                
+                <div class="payment-details">
+                    <div class="detail-item">
+                        <div class="detail-label">পেমেন্ট পরিমাণ</div>
+                        <div class="detail-value amount-highlight"><%= payment.amount %> টাকা</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">প্রেরকের নম্বর</div>
+                        <div class="detail-value"><%= payment.senderNumber %></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">প্রাপকের নম্বর</div>
+                        <div class="detail-value"><%= payment.receiveNumber %></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">ইউজার ইমেইল</div>
+                        <div class="detail-value"><%= payment.userEmail %></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">ইউজার ফোন</div>
+                        <div class="detail-value"><%= payment.userPhone %></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">জমা দেওয়ার সময়</div>
+                        <div class="detail-value"><%= new Date(payment.submittedAt).toLocaleString('bn-BD') %></div>
+                    </div>
+                    <% if (payment.status === 'approved' && payment.approvedAt) { %>
+                    <div class="detail-item">
+                        <div class="detail-label">অনুমোদনের সময়</div>
+                        <div class="detail-value"><%= new Date(payment.approvedAt).toLocaleString('bn-BD') %></div>
+                    </div>
+                    <% } %>
+                    <% if (payment.status === 'rejected' && payment.rejectedAt) { %>
+                    <div class="detail-item">
+                        <div class="detail-label">বাতিলের সময়</div>
+                        <div class="detail-value"><%= new Date(payment.rejectedAt).toLocaleString('bn-BD') %></div>
+                    </div>
+                    <% } %>
+                </div>
+                
+                <% if (payment.status === 'pending') { %>
+                <div class="payment-actions">
+                    <form method="POST" action="/admin/approve_payment/<%= payment.id %>" style="display: inline;">
+                        <button type="submit" class="action-btn btn-approve" 
+                                onclick="return confirm('এই পেমেন্টটি অনুমোদন করতে চান? ইউজারের অ্যাকাউন্টে <%= payment.amount %> টাকা যোগ হবে।')">
+                            ✅ অনুমোদন করুন
+                        </button>
+                    </form>
+                    <form method="POST" action="/admin/reject_payment/<%= payment.id %>" style="display: inline;">
+                        <button type="submit" class="action-btn btn-reject" 
+                                onclick="return confirm('এই পেমেন্টটি বাতিল করতে চান?')">
+                            ❌ বাতিল করুন
+                        </button>
+                    </form>
+                </div>
+                <% } %>
+            </div>
+        <% }); %>
+    <% } %>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="/admin_panel" class="btn btn-secondary">এডমিন প্যানেলে ফিরে যান</a>
+    <a href="/admin_logout" class="btn btn-danger" style="margin-left: 15px;">লগআউট</a>
+</div>
+
+<script>
+function filterPayments(status) {
+    const cards = document.querySelectorAll('.payment-card');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // Update active button
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Filter cards
+    cards.forEach(card => {
+        if (status === 'all') {
+            card.style.display = 'block';
+        } else {
+            if (card.dataset.status === status) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+}
+
+// Page load notifications
+window.onload = function() {
+    console.log('পেমেন্ট রেকর্ড পেজ লোড হয়েছে');
+    
+    // Auto-refresh every 30 seconds for new payments
+    setInterval(() => {
+        console.log('পেমেন্ট স্ট্যাটাস চেক করা হচ্ছে...');
+        // location.reload(); // Uncomment if you want auto-refresh
+    }, 30000);
+};
+</script>
+</body>
+</html>
